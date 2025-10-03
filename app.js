@@ -1,5 +1,5 @@
-/* Taras Bulba — Deck slides over Last Card, then flips (3s). Strict blank rule. Clearer specials. */
-/* Uses Web Animations API for the slide to ensure it actually moves cross-browser. */
+/* Taras Bulba — Deck slides over Last Card, then flips (3s).
+   Calling Blank is only a loss if a NUMBER appears (specials are fine). */
 
 let deck = [];
 let currentCard = null; // active reference number
@@ -75,10 +75,10 @@ function revealNext(guess){
   // compute slide distance to last card center
   const {dx, dy} = computeSlideDelta();
 
-  // Strict blank rule evaluated after reveal
-  const strictBlankLoss = (guess === "blank" && next !== "Blank");
+  // NEW: calling blank only loses if a NUMBER shows (specials are fine)
+  const blankLossOnNumberOnly = (guess === "blank" && typeof next === "number");
 
-  // Prepare the reveal text for the flip (back face)
+  // prepare the reveal text for the flip (back face)
   deckBack.textContent = (typeof next === "number") ? String(next) : next;
 
   // Trigger flip animations on faces for 3s while the slide runs
@@ -94,7 +94,6 @@ function revealNext(guess){
   );
 
   slide.onfinish = () => {
-    // Flip finished too (3s, via CSS). Evaluate the outcome.
     deckCardEl.classList.remove("animating");
 
     // Loud highlight for specials
@@ -103,13 +102,12 @@ function revealNext(guess){
       if (next === "Skip")    deckCardEl.classList.add("is-skip");
       if (next === "Pass")    deckCardEl.classList.add("is-pass");
       if (next === "Reverse") deckCardEl.classList.add("is-rev");
-      // Extra emphasis in status
       setStatus(`${next}! Previous number (${currentCard}) stays — guess again.`);
     }
 
-    if (strictBlankLoss){
+    if (blankLossOnNumberOnly){
       haptic(30);
-      setStatus("Wrong guess — you called Blank.");
+      setStatus("Wrong guess — you called Blank but drew a number.");
       showLoseScreen(next);
       return finishReveal();
     }
@@ -131,7 +129,7 @@ function revealNext(guess){
         haptic(12);
         setStatus("Correct: Blank! Previous number stays.");
       }
-      // Skip/Pass/Reverse status already set above
+      // Skip/Pass/Reverse already handled above (no loss even if guessed Blank)
     }
 
     finishReveal();
