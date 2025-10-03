@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="app" data-build="v4">
+  <main class="app">
     <header class="topbar">
       <h1>Taras Bulba</h1>
       <button id="installBtn" class="ghost" hidden>Install</button>
@@ -22,7 +22,6 @@
         <div class="panel">
           <div class="panel-title">Deck</div>
 
-          <!-- New: deck stack (static base) + top moving card (slides OVER discard) -->
           <div class="deck-stack">
             <div class="card deck-base" aria-hidden="true"></div>
 
@@ -35,7 +34,7 @@
           <div class="submeta"><span id="remaining">Deck: —</span></div>
         </div>
 
-        <!-- Discard pile (last card) -->
+        <!-- Discard pile -->
         <div class="panel">
           <div class="panel-title">Discard Pile</div>
           <div id="lastCard" class="card reference">
@@ -63,7 +62,7 @@
       <small>
         Specials: Skip • Pass • Reverse keep the previous number.  
         Calling Blank and drawing a number = loss. Calling Blank and drawing a special is fine.  
-        <span id="buildTag">Build: v4</span>
+        <span id="buildTag">Build: —</span> <!-- 👈 now populated by JS -->
       </small>
     </footer>
 
