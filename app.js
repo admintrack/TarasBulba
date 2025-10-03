@@ -1,9 +1,9 @@
-/* Taras Bulba — PWA + Single-Player Game with Flip + Strict Blank Rule + Update-aware */
+/* Taras Bulba — Split board: Deck (flip) + Last Card (reference) */
 
 let deck = [];
-let currentCard = null;      // last numbered card in play
-let remainingEl, statusEl, cardEl, loseOverlay, loseMsg, cardFront, cardBack;
-let isRevealing = false;     // prevent multiple clicks during flip
+let currentCard = null; // active reference number
+let remainingEl, statusEl, deckCardEl, deckFront, deckBack, lastCardEl, lastTextEl, loseOverlay, loseMsg;
+let isRevealing = false;
 
 const SPECIALS = ["Blank", "Skip", "Skip", "Pass", "Pass", "Reverse", "Reverse"];
 
@@ -11,7 +11,6 @@ function buildDeck() {
   const numbers = Array.from({ length: 14 }, (_, i) => i + 1);
   return [...numbers, ...SPECIALS];
 }
-
 function shuffle(a) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -20,14 +19,14 @@ function shuffle(a) {
   return a;
 }
 
-// Ensure the first visible card is a NUMBER (not a special)
+// Ensure first revealed reference is a number
 function dealFirstNumber() {
   let safety = 100;
   while (deck.length && typeof deck[deck.length - 1] !== "number" && safety--) {
     deck.unshift(deck.pop());
   }
   currentCard = deck.pop(); // number
-  drawCardFace(currentCard);
+  drawReference(currentCard);
   setStatus("Guess Higher, Lower, or Blank");
 }
 
@@ -35,38 +34,48 @@ function newRound() {
   deck = shuffle(buildDeck());
   dealFirstNumber();
   updateRemaining();
+  resetDeckFace();
   hideLoseScreen();
 }
 
-function setStatus(msg) { statusEl.textContent = msg; }
-function updateRemaining() { remainingEl.textContent = `Deck: ${deck.length}`; }
+function setStatus(msg){ statusEl.textContent = msg; }
+function updateRemaining(){ remainingEl.textContent = `Deck: ${deck.length}`; }
 
-function drawCardFace(v) {
-  const txt = (typeof v === "number") ? String(v) : v;
-  cardFront.textContent = txt;
-  cardBack.textContent = "?";
+function drawReference(v){
+  lastTextEl.textContent = String(v);
+  // subtle flash on reference card by re-using classes
+  lastCardEl.classList.remove("flash-good","flash-bad","flash-special");
+  void lastCardEl.offsetWidth;
+  lastCardEl.classList.add("flash-special");
+  setTimeout(()=> lastCardEl.classList.remove("flash-special"), 220);
+  const hint = document.getElementById("refHint");
+  hint.textContent = `Compare against: ${v}`;
 }
 
-function haptic(ms = 15){ if (navigator.vibrate) navigator.vibrate(ms); }
-function flash(kind){
-  cardEl.classList.remove("flash-good","flash-bad","flash-special");
-  void cardEl.offsetWidth; // reflow to restart animation
-  cardEl.classList.add(kind);
-  setTimeout(()=>cardEl.classList.remove(kind), 250);
+function resetDeckFace(){
+  deckFront.textContent = "?";
+  deckBack.textContent = "?";
 }
 
-function disableButtons(disabled) {
+function haptic(ms=15){ if (navigator.vibrate) navigator.vibrate(ms); }
+function flashDeck(kind){
+  deckCardEl.classList.remove("flash-good","flash-bad","flash-special");
+  void deckCardEl.offsetWidth;
+  deckCardEl.classList.add(kind);
+  setTimeout(()=>deckCardEl.classList.remove(kind), 250);
+}
+
+function disableButtons(disabled){
   ["btnHigher","btnLower","btnBlank","newGame"].forEach(id=>{
     const el = document.getElementById(id);
     if (!el) return;
-    if (disabled) el.classList.add("disabled");
-    else el.classList.remove("disabled");
+    if (disabled) el.classList.add("disabled"); else el.classList.remove("disabled");
   });
 }
 
 function revealNext(guess){
   if (isRevealing) return;
-  if (!deck.length) {
+  if (!deck.length){
     setStatus("Deck exhausted — reshuffling…");
     haptic(20);
     newRound();
@@ -76,64 +85,62 @@ function revealNext(guess){
   isRevealing = true;
   disableButtons(true);
   setStatus("Turning…");
-  cardEl.classList.add("flipping");
+  deckCardEl.classList.add("flipping");
   haptic(8);
 
   const next = deck.pop();
   updateRemaining();
 
-  // Strict: calling blank and it isn't blank → loss (even if special)
   const strictBlankLoss = (guess === "blank" && next !== "Blank");
 
   setTimeout(()=> {
-    const showText = (typeof next === "number") ? String(next) : next;
-    cardBack.textContent = showText;
+    deckBack.textContent = (typeof next === "number") ? String(next) : next;
 
     setTimeout(()=> {
-      cardEl.classList.remove("flipping");
+      deckCardEl.classList.remove("flipping");
 
-      if (strictBlankLoss) {
-        flash("flash-bad");
+      if (strictBlankLoss){
+        flashDeck("flash-bad");
         haptic(30);
         setStatus("Wrong guess — you called Blank.");
         showLoseScreen(next);
-        isRevealing = false;
-        disableButtons(false);
+        isRevealing = false; disableButtons(false);
         return;
       }
 
-      if (typeof next === "number") {
+      if (typeof next === "number"){
         const correct =
           (guess === "higher" && next > currentCard) ||
           (guess === "lower"  && next < currentCard);
 
-        if (correct) {
-          flash("flash-good");
+        if (correct){
+          flashDeck("flash-good");
           haptic(10);
           currentCard = next;
-          drawCardFace(currentCard);
+          drawReference(currentCard);   // update right panel
           setStatus("Nice! Keep going.");
         } else {
-          flash("flash-bad");
+          flashDeck("flash-bad");
           haptic(30);
           setStatus("Wrong guess.");
           showLoseScreen(next);
         }
       } else {
-        if (next === "Blank") {
-          flash("flash-good");
+        if (next === "Blank"){
+          flashDeck("flash-good");
           haptic(12);
-          drawCardFace("Blank");
+          // reference stays the same number
           setStatus("Correct: Blank! Previous number stays.");
         } else {
-          flash("flash-special");
+          // Skip / Pass / Reverse
+          flashDeck("flash-special");
           haptic(8);
-          drawCardFace(next);
           setStatus(`${next}! Previous number (${currentCard}) stays — guess again.`);
         }
       }
 
-      cardFront.textContent = cardBack.textContent;
+      // After reveal, reset deck front to '?' ready for next turn
+      resetDeckFace();
 
       isRevealing = false;
       disableButtons(false);
@@ -141,6 +148,7 @@ function revealNext(guess){
   }, 2000);
 }
 
+/* Lose Screen */
 function showLoseScreen(revealed){
   if (!loseOverlay) return;
   loseMsg.textContent = `You revealed ${revealed}.`;
@@ -150,49 +158,41 @@ function hideLoseScreen(){
   if (loseOverlay) loseOverlay.classList.add("hidden");
 }
 
-// --- PWA update helpers ---
-async function initServiceWorker() {
+/* SW update helpers */
+async function initServiceWorker(){
   if (!("serviceWorker" in navigator)) return;
-
   const reg = await navigator.serviceWorker.register("./sw.js");
-  // Proactively check for an update on every load
   try { await reg.update(); } catch {}
-
-  // Auto-reload when the new SW takes control
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    window.location.reload();
-  });
+  navigator.serviceWorker.addEventListener("controllerchange", () => { window.location.reload(); });
 }
 
-// UI wiring
+/* Wiring */
 window.addEventListener("load", () => {
-  cardEl = document.getElementById("card");
-  cardFront = document.getElementById("cardFront");
-  cardBack = document.getElementById("cardBack");
-  statusEl = document.getElementById("status");
+  deckCardEl = document.getElementById("deckCard");
+  deckFront   = document.getElementById("deckFront");
+  deckBack    = document.getElementById("deckBack");
+  lastCardEl  = document.getElementById("lastCard");
+  lastTextEl  = document.getElementById("lastText");
+  statusEl    = document.getElementById("status");
   remainingEl = document.getElementById("remaining");
   loseOverlay = document.getElementById("loseOverlay");
-  loseMsg = document.getElementById("loseMsg");
+  loseMsg     = document.getElementById("loseMsg");
 
   document.getElementById("btnHigher").addEventListener("click", ()=> revealNext("higher"));
   document.getElementById("btnLower").addEventListener("click",  ()=> revealNext("lower"));
   document.getElementById("btnBlank").addEventListener("click",  ()=> revealNext("blank"));
   document.getElementById("newGame").addEventListener("click",   ()=> { haptic(8); newRound(); });
-  document.getElementById("restartBtn").addEventListener("click", ()=> { hideLoseScreen(); newRound(); });
+  document.getElementById("restartBtn").addEventListener("click",()=> { hideLoseScreen(); newRound(); });
 
-  // Start the game
   newRound();
-
-  // PWA: register/update service worker and auto-reload on new version
   initServiceWorker();
 
-  // Lightweight custom install prompt
+  // PWA install prompt
   let deferredPrompt;
   const installBtn = document.getElementById("installBtn");
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
-    deferredPrompt = e;
-    installBtn.hidden = false;
+    deferredPrompt = e; installBtn.hidden = false;
   });
   installBtn?.addEventListener("click", async () => {
     installBtn.hidden = true;
