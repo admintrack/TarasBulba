@@ -1,5 +1,5 @@
 // Taras Bulba — ultra-simple cache-first service worker
-const CACHE = "tarasbulba-v1";
+const CACHE = "tarasbulba-v2"; // bump version so updates reach clients
 const ASSETS = [
   "./",
   "./index.html",
