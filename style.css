@@ -27,33 +27,48 @@ h1{font-size:1.2rem;margin:0;font-weight:700}
 .panel{display:flex;flex-direction:column;align-items:center;gap:8px}
 .panel-title{font-weight:700;color:var(--muted)}
 
+/* Shared card */
 .card{
   width:min(90vw,420px);height:240px;background:var(--card);
   border-radius:20px;display:grid;place-items:center;box-shadow:var(--shadow);
   position:relative;overflow:hidden;perspective:1200px;
   border:1px solid rgba(255,255,255,.06); z-index: 1;
 }
-.card.reference{background:#0c1424; z-index: 2;} /* discard below deck only when deck is not on-top */
+.card.reference{background:#0c1424; z-index: 2;}
 
-/* Deck card visual “stack” + allow overflow for stack backs */
-.card.deck{ overflow: visible; }
-.card.deck::before,
-.card.deck::after{
+/* NEW: deck stack container (static deck below + moving top card) */
+.deck-stack{
+  position:relative;
+  width:min(90vw,420px);
+  height:240px;
+}
+
+/* Static deck base shows extra backs (does NOT move) */
+.card.deck-base{
+  position:absolute; inset:0;
+  overflow:visible; /* to show stacked backs */
+  pointer-events:none;
+  z-index: 1;
+}
+.card.deck-base::before,
+.card.deck-base::after{
   content:"";
-  position:absolute;
-  inset:0;
+  position:absolute; inset:0;
   border-radius:18px;
   background:
     repeating-linear-gradient(45deg,#0a0f1d 0 6px,#0c1324 6px 12px);
   border:1px solid rgba(255,255,255,.08);
   box-shadow: 0 4px 12px rgba(0,0,0,.35);
-  z-index:-1;
 }
-.card.deck::before{ transform: translate(8px,-8px); opacity:.9; }
-.card.deck::after { transform: translate(14px,-14px); opacity:.8; }
+.card.deck-base::before{ transform: translate(8px,-8px); opacity:.9; }
+.card.deck-base::after { transform: translate(14px,-14px); opacity:.8; }
 
-/* During slide, force deck on top of everything */
-.card.on-top{ z-index: 9999; }
+/* Moving top card (this is what slides/ flips) */
+.card.deck-top{
+  position:absolute; inset:0;
+  z-index: 3; /* above base */
+}
+.card.on-top{ z-index: 9999; } /* ensure over the discard while sliding */
 
 /* Faces */
 .face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
@@ -89,7 +104,8 @@ h1{font-size:1.2rem;margin:0;font-weight:700}
 .btn.disabled{opacity:.5;pointer-events:none}
 .footer{display:flex;justify-content:center;margin-top:10px;color:var(--muted)}
 
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center}
+/* Overlay must be ABOVE everything, including sliding card */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:100000}
 .overlay.hidden{display:none}
 .overlay-content{background:var(--card);padding:24px;border-radius:16px;text-align:center}
 .overlay-content h2{color:var(--bad);margin:0 0 12px}
