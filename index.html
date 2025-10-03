@@ -7,12 +7,10 @@
   <meta name="theme-color" content="#0f172a" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icons/icon-192.png" />
-
-  <!-- Main stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="app" data-build="v2">
+  <main class="app" data-build="v3">
     <header class="topbar">
       <h1>Taras Bulba</h1>
       <button id="installBtn" class="ghost" hidden>Install</button>
@@ -23,15 +21,15 @@
         <!-- Deck panel -->
         <div class="panel">
           <div class="panel-title">Deck</div>
-          <div id="deckCard" class="card" aria-live="polite" aria-atomic="true">
-            <div id="deckLabel" class="card-label hidden"></div>
+          <!-- NOTE: deck has class 'deck' for stacked-back visuals -->
+          <div id="deckCard" class="card deck" aria-live="polite" aria-atomic="true">
             <span class="face front" id="deckFront">?</span>
             <span class="face back" id="deckBack">?</span>
           </div>
           <div class="submeta"><span id="remaining">Deck: —</span></div>
         </div>
 
-        <!-- Discard pile -->
+        <!-- Discard pile (last card) -->
         <div class="panel">
           <div class="panel-title">Discard Pile</div>
           <div id="lastCard" class="card reference">
@@ -58,9 +56,8 @@
     <footer class="footer">
       <small>
         Specials: Skip • Pass • Reverse keep the previous number.  
-        Calling Blank and drawing a number = loss.  
-        Calling Blank and drawing a special is fine.  
-        <span id="buildTag">Build: v2</span>
+        Calling Blank and drawing a number = loss. Calling Blank and drawing a special is fine.  
+        <span id="buildTag">Build: v3</span>
       </small>
     </footer>
 
@@ -68,7 +65,7 @@
     <div id="loseOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="loseTitle">
       <div class="overlay-content">
         <h2 id="loseTitle">Game Over</h2>
-        <p id="loseMsg">You guessed wrong!</p>
+        <p id="loseMsg">You revealed <span id="loseCardName">—</span>.</p>
         <button id="restartBtn" class="btn pill">Try Again ↻</button>
       </div>
     </div>
