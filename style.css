@@ -21,16 +21,41 @@ h1{font-size:1.2rem;margin:0;font-weight:700}
   align-items:center;
   gap:20px;
   width:100%;
+  position: relative;
 }
 
 .panel{display:flex;flex-direction:column;align-items:center;gap:8px}
 .panel-title{font-weight:700;color:var(--muted)}
 
-.card{width:min(90vw,420px);height:240px;background:var(--card);
+.card{
+  width:min(90vw,420px);height:240px;background:var(--card);
   border-radius:20px;display:grid;place-items:center;box-shadow:var(--shadow);
   position:relative;overflow:hidden;perspective:1200px;
-  border:1px solid rgba(255,255,255,.06)}
-.card.reference{background:#0c1424}
+  border:1px solid rgba(255,255,255,.06); z-index: 1;
+}
+.card.reference{background:#0c1424; z-index: 2;} /* discard below deck only when deck is not on-top */
+
+/* Deck card visual “stack” + allow overflow for stack backs */
+.card.deck{ overflow: visible; }
+.card.deck::before,
+.card.deck::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:18px;
+  background:
+    repeating-linear-gradient(45deg,#0a0f1d 0 6px,#0c1324 6px 12px);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,.35);
+  z-index:-1;
+}
+.card.deck::before{ transform: translate(8px,-8px); opacity:.9; }
+.card.deck::after { transform: translate(14px,-14px); opacity:.8; }
+
+/* During slide, force deck on top of everything */
+.card.on-top{ z-index: 9999; }
+
+/* Faces */
 .face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-size:5rem;font-weight:800;color:var(--ink);backface-visibility:hidden}
 .face.single{backface-visibility:visible;position:relative}
@@ -41,7 +66,7 @@ h1{font-size:1.2rem;margin:0;font-weight:700}
 @keyframes flipFront{0%{transform:rotateY(0)}50%{transform:rotateY(90deg)}100%{transform:rotateY(180deg)}}
 @keyframes flipBack{0%{transform:rotateY(180deg)}50%{transform:rotateY(90deg)}100%{transform:rotateY(360deg)}}
 
-/* Labels for specials */
+/* Special label ONLY on the LAST card */
 .card-label{
   position:absolute;
   top:8px;
