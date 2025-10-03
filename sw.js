@@ -1,5 +1,5 @@
-// Ultra-simple cache-first service worker
-const CACHE = "hilo-v1";
+// Taras Bulba — ultra-simple cache-first service worker
+const CACHE = "tarasbulba-v1";
 const ASSETS = [
   "./",
   "./index.html",
