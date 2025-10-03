@@ -167,7 +167,7 @@ async function initServiceWorker(){
   if (!("serviceWorker" in navigator)) return;
   const reg = await navigator.serviceWorker.register("./sw.js");
   try { await reg.update(); } catch {}
-  navigator.serviceWorker.addEventListener("controllerchange", () => { window.location.reload(); });
+  //navigator.serviceWorker.addEventListener("controllerchange", () => { window.location.reload(); });
 }
 
 /* Wiring */
