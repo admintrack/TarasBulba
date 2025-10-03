@@ -1,11 +1,9 @@
-// Taras Bulba — simple Higher/Lower/Blank card game.
-// Rules: deck 1–14 plus Blank, 2 Skip, 2 Pass, 2 Reverse.
-// Guess Higher, Lower, or Blank. Blank guess only fails if a NUMBER shows.
-// Specials keep the previous number. Lose = reset deck.
+// Taras Bulba — stacked layout with special labels.
 
 let deck = [];
 let currentCard = null;
 let isRevealing = false;
+let deckLabel, lastLabel;
 
 const SPECIALS = ["Blank", "Skip","Skip","Pass","Pass","Reverse","Reverse"];
 
@@ -16,10 +14,10 @@ function setStatus(msg){document.getElementById("status").textContent=msg;}
 function updateRemaining(){document.getElementById("remaining").textContent=`Deck: ${deck.length}`;}
 function drawReference(v){document.getElementById("lastText").textContent=v;document.getElementById("refHint").textContent=`Compare against: ${v}`;}
 function resetDeckFace(){document.getElementById("deckFront").textContent="?";document.getElementById("deckBack").textContent="?";}
+function showLabel(el,text){if(!el)return;if(text){el.textContent=text;el.classList.remove("hidden");}else{el.textContent="";el.classList.add("hidden");}}
 
 function newRound(){
   deck = shuffle(buildDeck());
-  // ensure first card is a number
   while(typeof deck[deck.length-1]!=="number"){deck.unshift(deck.pop());}
   currentCard = deck.pop();
   drawReference(currentCard);
@@ -27,6 +25,8 @@ function newRound(){
   updateRemaining();
   hideLoseScreen();
   setStatus("Guess Higher, Lower, or Blank");
+  showLabel(deckLabel,null);
+  showLabel(lastLabel,null);
 }
 
 function computeSlideDelta(){
@@ -56,6 +56,7 @@ function revealNext(guess){
 }
 
 function evaluate(next,guess){
+  showLabel(deckLabel,null);showLabel(lastLabel,null);
   const blankLoss=(guess==="blank"&&typeof next==="number");
   if(blankLoss){setStatus("Wrong guess — called Blank but drew a number.");showLoseScreen(next);return;}
   if(typeof next==="number"){
@@ -63,8 +64,8 @@ function evaluate(next,guess){
     if(correct){currentCard=next;drawReference(currentCard);setStatus("Nice! Keep going.");}
     else{setStatus("Wrong guess.");showLoseScreen(next);}
   }else{
-    if(next==="Blank"){setStatus("Correct: Blank! Previous number stays.");}
-    else{setStatus(`${next}! Previous number (${currentCard}) stays.`);}
+    if(next==="Blank"){setStatus("Correct: Blank! Previous number stays.");showLabel(deckLabel,"Blank");showLabel(lastLabel,"Blank");}
+    else{setStatus(`${next}! Previous number (${currentCard}) stays.`);showLabel(deckLabel,next);showLabel(lastLabel,next);}
   }
 }
 
@@ -76,11 +77,12 @@ function finishReveal(){
 }
 
 function disableButtons(d){["btnHigher","btnLower","btnBlank","newGame"].forEach(id=>{document.getElementById(id).classList.toggle("disabled",d);});}
-
 function showLoseScreen(v){document.getElementById("loseMsg").textContent=`You revealed ${v}.`;document.getElementById("loseOverlay").classList.remove("hidden");}
 function hideLoseScreen(){document.getElementById("loseOverlay").classList.add("hidden");}
 
 window.addEventListener("load",()=>{
+  deckLabel=document.getElementById("deckLabel");
+  lastLabel=document.getElementById("lastLabel");
   document.getElementById("btnHigher").onclick=()=>revealNext("higher");
   document.getElementById("btnLower").onclick=()=>revealNext("lower");
   document.getElementById("btnBlank").onclick=()=>revealNext("blank");
