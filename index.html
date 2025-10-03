@@ -18,7 +18,11 @@
     </header>
 
     <section class="table">
-      <div id="card" class="card" aria-live="polite" aria-atomic="true">—</div>
+      <!-- Card now has inner faces for a nicer flip -->
+      <div id="card" class="card" aria-live="polite" aria-atomic="true">
+        <span class="face front" id="cardFront">—</span>
+        <span class="face back" id="cardBack">?</span>
+      </div>
 
       <div class="meta">
         <span id="status" class="status">Tap a guess to start</span>
@@ -37,7 +41,7 @@
     </section>
 
     <footer class="footer">
-      <small>Specials: Skip • Pass • Reverse keep the previous number. Guess Blank for the Blank card.</small>
+      <small>Specials: Skip • Pass • Reverse keep the previous number. Calling Blank and it’s not Blank = loss.</small>
     </footer>
 
     <!-- Lose Screen Overlay -->
