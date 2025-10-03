@@ -1,8 +1,9 @@
-/* Taras Bulba — Minimal PWA + Single-Player Game Logic */
+/* Taras Bulba — PWA + Single-Player Game with Flip + Strict Blank Rule */
 
 let deck = [];
 let currentCard = null;      // last numbered card in play
-let remainingEl, statusEl, cardEl, loseOverlay, loseMsg;
+let remainingEl, statusEl, cardEl, loseOverlay, loseMsg, cardFront, cardBack;
+let isRevealing = false;     // prevent multiple clicks during flip
 
 const SPECIALS = ["Blank", "Skip", "Skip", "Pass", "Pass", "Reverse", "Reverse"];
 
@@ -41,7 +42,11 @@ function setStatus(msg) { statusEl.textContent = msg; }
 function updateRemaining() { remainingEl.textContent = `Deck: ${deck.length}`; }
 
 function drawCardFace(v) {
-  cardEl.textContent = (typeof v === "number") ? v : v; // shows special text as-is
+  // update both faces so it looks correct before/after flip
+  const txt = (typeof v === "number") ? String(v) : v;
+  cardFront.textContent = txt;
+  // back face shows "?" until next reveal
+  cardBack.textContent = "?";
 }
 
 function haptic(ms = 15){ if (navigator.vibrate) navigator.vibrate(ms); }
@@ -49,10 +54,20 @@ function flash(kind){
   cardEl.classList.remove("flash-good","flash-bad","flash-special");
   void cardEl.offsetWidth; // reflow to restart animation
   cardEl.classList.add(kind);
-  setTimeout(()=>cardEl.classList.remove(kind), 220);
+  setTimeout(()=>cardEl.classList.remove(kind), 250);
+}
+
+function disableButtons(disabled) {
+  ["btnHigher","btnLower","btnBlank","newGame"].forEach(id=>{
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (disabled) el.classList.add("disabled");
+    else el.classList.remove("disabled");
+  });
 }
 
 function revealNext(guess){
+  if (isRevealing) return; // don't double-trigger
   if (!deck.length) {
     setStatus("Deck exhausted — reshuffling…");
     haptic(20);
@@ -60,64 +75,91 @@ function revealNext(guess){
     return;
   }
 
+  isRevealing = true;
+  disableButtons(true);
+  setStatus("Turning…");
+  cardEl.classList.add("flipping");
+  haptic(8);
+
   const next = deck.pop();
   updateRemaining();
 
-  if (typeof next === "number") {
-    if (guess === "blank") {
-      lose(next);
-      return;
-    }
-    const correct =
-      (guess === "higher" && next > currentCard) ||
-      (guess === "lower"  && next < currentCard);
+  // Strict Blank rule: if player called "blank" and the next is anything except "Blank" → lose.
+  const strictBlankLoss = (guess === "blank" && next !== "Blank");
 
-    drawCardFace(next);
-    if (correct) {
-      flash("flash-good");
-      haptic(10);
-      currentCard = next;
-      setStatus("Nice! Keep going.");
-    } else {
-      lose(next);
-    }
-  } else {
-    // Special card: Blank / Skip / Pass / Reverse
-    if (next === "Blank") {
-      if (guess === "blank") {
-        drawCardFace("Blank");
-        flash("flash-good");
-        haptic(12);
-        setStatus("Correct: Blank! Previous number stays.");
-      } else {
-        lose("Blank");
+  // Wait 2s to simulate turning the card
+  setTimeout(()=> {
+    // Flip complete, reveal result
+    const showText = (typeof next === "number") ? String(next) : next;
+    cardBack.textContent = showText; // the flipped side will now show the revealed card
+
+    // Small delay to ensure it visually settles before evaluation styles
+    setTimeout(()=> {
+      cardEl.classList.remove("flipping");
+
+      if (strictBlankLoss) {
+        // Reveal then lose
+        flash("flash-bad");
+        haptic(30);
+        setStatus("Wrong guess — you called Blank.");
+        showLoseScreen(next);
+        isRevealing = false;
+        disableButtons(false);
         return;
       }
-    } else {
-      // Skip / Pass / Reverse → no penalty, previous number stays
-      drawCardFace(next);
-      flash("flash-special");
-      haptic(8);
-      setStatus(`${next}! Previous number (${currentCard}) stays — guess again.`);
-    }
-  }
+
+      if (typeof next === "number") {
+        // Evaluate higher/lower
+        const correct =
+          (guess === "higher" && next > currentCard) ||
+          (guess === "lower"  && next < currentCard);
+
+        if (correct) {
+          flash("flash-good");
+          haptic(10);
+          currentCard = next;
+          // sync front face to revealed after flip
+          drawCardFace(currentCard);
+          setStatus("Nice! Keep going.");
+        } else {
+          flash("flash-bad");
+          haptic(30);
+          setStatus("Wrong guess.");
+          showLoseScreen(next);
+        }
+      } else {
+        // Special card
+        if (next === "Blank") {
+          // Only correct if guessed Blank (strictBlankLoss already handled)
+          flash("flash-good");
+          haptic(12);
+          // previous number stays active
+          drawCardFace("Blank");
+          setStatus("Correct: Blank! Previous number stays.");
+        } else {
+          // Skip / Pass / Reverse → no penalty; previous number stays
+          flash("flash-special");
+          haptic(8);
+          drawCardFace(next);
+          setStatus(`${next}! Previous number (${currentCard}) stays — guess again.`);
+        }
+      }
+
+      // Resync front face to whatever is showing now
+      cardFront.textContent = cardBack.textContent;
+
+      isRevealing = false;
+      disableButtons(false);
+    }, 60);
+  }, 2000);
 }
 
-function lose(revealed){
-  drawCardFace(revealed);
-  flash("flash-bad");
-  haptic(30);
-  setStatus("Wrong guess — game over.");
-  showLoseScreen(revealed);
-}
-
-/* Lose screen helpers */
 function showLoseScreen(revealed){
-  if (loseOverlay) {
-    loseMsg.textContent = `You revealed ${revealed}.`;
-    loseOverlay.classList.remove("hidden");
-  }
+  if (!loseOverlay) return;
+  loseMsg.textContent = `You revealed ${revealed}.`;
+  loseOverlay.classList.remove("hidden");
 }
+
 function hideLoseScreen(){
   if (loseOverlay) loseOverlay.classList.add("hidden");
 }
@@ -125,6 +167,8 @@ function hideLoseScreen(){
 // UI wiring
 window.addEventListener("load", () => {
   cardEl = document.getElementById("card");
+  cardFront = document.getElementById("cardFront");
+  cardBack = document.getElementById("cardBack");
   statusEl = document.getElementById("status");
   remainingEl = document.getElementById("remaining");
   loseOverlay = document.getElementById("loseOverlay");
