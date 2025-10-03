@@ -1,5 +1,7 @@
-// Taras Bulba — moving card slides OVER discard; static deck stays below.
+// Taras Bulba — deck slides OVER discard; static deck stays below.
 // Special label appears ONLY on the last (discard) card. Overlay is above all.
+
+const BUILD_VERSION = "v6"; // ⬅️ bumped
 
 let deck = [];
 let currentCard = null;
@@ -75,9 +77,19 @@ function revealNext(guess){
 }
 
 function evaluate(next,guess){
-  const blankLoss = (guess==="blank" && typeof next==="number");
-  if(blankLoss){
+  // Loss conditions:
+  // 1) You CALL Blank but draw a NUMBER -> loss.
+  const loseByBlankCallNumber = (guess === "blank" && typeof next === "number");
+  // 2) You do NOT call Blank but draw BLANK -> instant loss (new rule).
+  const loseByUnexpectedBlank = (guess !== "blank" && next === "Blank");
+
+  if (loseByBlankCallNumber) {
     setStatus("Wrong guess — called Blank but drew a number.");
+    showLoseScreen(next);
+    return;
+  }
+  if (loseByUnexpectedBlank) {
+    setStatus("Wrong guess — drew Blank without calling it.");
     showLoseScreen(next);
     return;
   }
@@ -93,11 +105,13 @@ function evaluate(next,guess){
       showLoseScreen(next);
     }
   } else {
-    // Specials & Blank: label ONLY on last card
+    // Specials (Skip/Pass/Reverse) and the called-Blank-correct case
     if(next==="Blank"){
+      // Reaching here means guess === "blank" (correct)
       setStatus("Correct: Blank! Previous number stays.");
       showLabel(lastLabel, "Blank");
     } else {
+      // Skip / Pass / Reverse → number stays, show label on last only
       setStatus(`${next}! Previous number (${currentCard}) stays.`);
       showLabel(lastLabel, next);
     }
@@ -110,7 +124,7 @@ function finishReveal(){
     [{transform:getComputedStyle(deckCard).transform},{transform:"translate(0,0)"}],
     {duration:250,fill:"forwards"}
   ).onfinish = () => {
-    deckCard.classList.remove("on-top"); // restore z-index so overlay stays above
+    deckCard.classList.remove("on-top");
     resetDeckFace();
     disableButtons(false);
     isRevealing = false;
@@ -140,6 +154,10 @@ window.addEventListener("load",()=>{
   document.getElementById("btnBlank").onclick  = ()=> revealNext("blank");
   document.getElementById("newGame").onclick   = ()=> newRound();
   document.getElementById("restartBtn").onclick= ()=> newRound();
+
+  // Show build version in footer
+  const tag=document.getElementById("buildTag");
+  if(tag) tag.textContent = `Build: ${BUILD_VERSION}`;
 
   newRound();
 });
