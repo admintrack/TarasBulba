@@ -1,10 +1,13 @@
 {
-  "name": "Hello World PWA",
-  "short_name": "HelloPWA",
-  "start_url": "index.html",
+  "name": "Taras Bulba",
+  "short_name": "TarasBulba",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0f4c81",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "Taras Bulba — a single-player higher/lower/blank card game with specials.",
   "icons": [
     {
       "src": "icons/icon-192.png",
