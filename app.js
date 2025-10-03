@@ -1,5 +1,6 @@
 /* Taras Bulba — Deck slides over Last Card, then flips (3s).
-   Calling Blank is only a loss if a NUMBER appears (specials are fine). */
+   Calling Blank is only a loss if a NUMBER appears (specials are fine).
+   Includes a one-time Service Worker self-heal for stuck caches. */
 
 let deck = [];
 let currentCard = null; // active reference number
@@ -75,7 +76,7 @@ function revealNext(guess){
   // compute slide distance to last card center
   const {dx, dy} = computeSlideDelta();
 
-  // NEW: calling blank only loses if a NUMBER shows (specials are fine)
+  // Calling blank only loses if a NUMBER shows (specials are fine)
   const blankLossOnNumberOnly = (guess === "blank" && typeof next === "number");
 
   // prepare the reveal text for the flip (back face)
@@ -84,7 +85,7 @@ function revealNext(guess){
   // Trigger flip animations on faces for 3s while the slide runs
   deckCardEl.classList.add("animating");
 
-  // Slide the whole card over the last card (3s)
+  // Slide the whole card over the last card (3s) using Web Animations API
   const slide = deckCardEl.animate(
     [
       { transform: "translate(0,0)" },
@@ -162,12 +163,28 @@ function showLoseScreen(revealed){
 }
 function hideLoseScreen(){ if (loseOverlay) loseOverlay.classList.add("hidden"); }
 
-/* SW update helpers (unchanged) */
+/* ---------- Service Worker: one-time self-heal and re-register ---------- */
 async function initServiceWorker(){
   if (!("serviceWorker" in navigator)) return;
-  const reg = await navigator.serviceWorker.register("./sw.js");
+
+  // One-time self-heal: unregister ALL existing SWs (old/stuck), then reload once
+  if (!sessionStorage.getItem("tb_sw_healed")) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    if (regs.length) {
+      await Promise.all(regs.map(r => r.unregister()));
+      sessionStorage.setItem("tb_sw_healed", "1");
+      location.reload();
+      return;
+    }
+    sessionStorage.setItem("tb_sw_healed", "1");
+  }
+
+  // Register the new minimal SW (query ensures a fresh fetch)
+  const reg = await navigator.serviceWorker.register("./sw.js?rev=1");
   try { await reg.update(); } catch {}
-  //navigator.serviceWorker.addEventListener("controllerchange", () => { window.location.reload(); });
+
+  // If a new SW takes control later, reload to pick up latest files
+  navigator.serviceWorker.addEventListener("controllerchange", () => { window.location.reload(); });
 }
 
 /* Wiring */
