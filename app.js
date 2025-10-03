@@ -1,4 +1,5 @@
 /* Taras Bulba — Deck slides over Last Card, then flips (3s). Strict blank rule. Clearer specials. */
+/* Uses Web Animations API for the slide to ensure it actually moves cross-browser. */
 
 let deck = [];
 let currentCard = null; // active reference number
@@ -18,6 +19,7 @@ function dealFirstNumber(){
   drawReference(currentCard);
   setStatus("Guess Higher, Lower, or Blank");
 }
+
 function newRound(){
   deck = shuffle(buildDeck());
   dealFirstNumber();
@@ -26,6 +28,7 @@ function newRound(){
   clearSpecialClasses();
   hideLoseScreen();
 }
+
 function setStatus(msg){ statusEl.textContent = msg; }
 function updateRemaining(){ remainingEl.textContent = `Deck: ${deck.length}`; }
 
@@ -69,38 +72,46 @@ function revealNext(guess){
   const next = deck.pop();
   updateRemaining();
 
-  // Prepare the animation: slide towards last card and flip (3s)
+  // compute slide distance to last card center
   const {dx, dy} = computeSlideDelta();
-  deckCardEl.style.setProperty("--dx", `${dx}px`);
-  deckCardEl.style.setProperty("--dy", `${dy}px`);
 
-  // Strict blank rule evaluated after reveal; but we already know 'next'
+  // Strict blank rule evaluated after reveal
   const strictBlankLoss = (guess === "blank" && next !== "Blank");
 
-  // Put revealed value on the back so it appears after flip
+  // Prepare the reveal text for the flip (back face)
   deckBack.textContent = (typeof next === "number") ? String(next) : next;
 
-  // Start slide+flip
+  // Trigger flip animations on faces for 3s while the slide runs
   deckCardEl.classList.add("animating");
 
-  // Total animation duration = 3000ms
-  setTimeout(()=> {
-    // Animation complete: evaluate outcome
+  // Slide the whole card over the last card (3s)
+  const slide = deckCardEl.animate(
+    [
+      { transform: "translate(0,0)" },
+      { transform: `translate(${dx}px, ${dy}px)` }
+    ],
+    { duration: 3000, easing: "ease", fill: "forwards" }
+  );
+
+  slide.onfinish = () => {
+    // Flip finished too (3s, via CSS). Evaluate the outcome.
     deckCardEl.classList.remove("animating");
 
-    // Highlight specials loudly
+    // Loud highlight for specials
     if (typeof next !== "number" && next !== "Blank"){
       deckCardEl.classList.add("is-special");
       if (next === "Skip")    deckCardEl.classList.add("is-skip");
       if (next === "Pass")    deckCardEl.classList.add("is-pass");
       if (next === "Reverse") deckCardEl.classList.add("is-rev");
+      // Extra emphasis in status
+      setStatus(`${next}! Previous number (${currentCard}) stays — guess again.`);
     }
 
     if (strictBlankLoss){
       haptic(30);
       setStatus("Wrong guess — you called Blank.");
       showLoseScreen(next);
-      finishReveal(); return;
+      return finishReveal();
     }
 
     if (typeof next === "number"){
@@ -119,26 +130,30 @@ function revealNext(guess){
       if (next === "Blank"){
         haptic(12);
         setStatus("Correct: Blank! Previous number stays.");
-      } else {
-        haptic(10);
-        setStatus(`${next}! Previous number (${currentCard}) stays — guess again.`);
       }
+      // Skip/Pass/Reverse status already set above
     }
 
     finishReveal();
-  }, 3000);
+  };
+
+  slide.oncancel = () => {
+    // Safety: reset if animation gets cancelled
+    deckCardEl.classList.remove("animating");
+    finishReveal();
+  };
 }
 
 function finishReveal(){
-  // Snap deck card back to origin position (smoothly) and reset faces
-  deckCardEl.style.transition = "transform .25s ease";
-  deckCardEl.style.transform = "translate(0,0)";
-  setTimeout(()=>{
-    deckCardEl.style.transition = "";
+  // Snap deck card back to origin, then reset faces; re-enable input
+  deckCardEl.animate(
+    [{ transform: getComputedStyle(deckCardEl).transform }, { transform: "translate(0,0)" }],
+    { duration: 250, easing: "ease", fill: "forwards" }
+  ).onfinish = () => {
     resetDeckFace();
     disableButtons(false);
     isRevealing = false;
-  }, 260);
+  };
 }
 
 /* Lose Screen */
