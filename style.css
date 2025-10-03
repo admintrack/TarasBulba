@@ -23,19 +23,27 @@ body{
     linear-gradient(180deg, var(--bg), var(--bg2));
 }
 
-.app{max-width:600px;margin:0 auto;padding:20px 16px;display:flex;flex-direction:column;min-height:100%}
+.app{max-width:900px;margin:0 auto;padding:20px 16px;display:flex;flex-direction:column;min-height:100%}
 
-.topbar{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:12px; margin-bottom:12px;
-}
+.topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
 h1{font-size:1.15rem;margin:0;font-weight:700;letter-spacing:.2px}
 
-.table{
-  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+.table{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px}
+
+/* New board layout */
+.board{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:16px;
+  width:100%;
+}
+.panel{display:flex; flex-direction:column; align-items:center; gap:8px}
+.panel-title{font-weight:700; color:var(--muted); letter-spacing:.2px}
+
+@media (min-width:700px){
+  .board{ grid-template-columns: 1fr 1fr; gap:24px; }
 }
 
-/* Card with 3D flip */
 .card{
   width:min(90vw,420px); height:240px;
   background:linear-gradient(180deg, #0f172a, #0b1220);
@@ -45,6 +53,7 @@ h1{font-size:1.15rem;margin:0;font-weight:700;letter-spacing:.2px}
   position:relative; overflow:hidden; isolation:isolate;
   perspective: 1200px;
 }
+.card.reference{ background:linear-gradient(180deg, #0e172a, #0c1424); }
 .card::after{
   content:"";
   position:absolute; inset:-40% -40% auto auto;
@@ -53,23 +62,18 @@ h1{font-size:1.15rem;margin:0;font-weight:700;letter-spacing:.2px}
   filter:blur(16px); transform:rotate(8deg);
   pointer-events:none; z-index:-1;
 }
+
+/* Flip faces (deck card only) */
 .face{
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
   width:100%; height:100%;
   backface-visibility:hidden;
   font-size:5rem; font-weight:800; letter-spacing:1px; color:var(--ink);
 }
-.back{
-  transform: rotateY(180deg);
-  font-size:3rem; color:#cbd5e1;
-  content:"?";
-}
-.card.flipping .front{
-  animation: flipFront 2s ease forwards;
-}
-.card.flipping .back{
-  animation: flipBack 2s ease forwards;
-}
+.face.single{backface-visibility:visible; position:relative}
+.back{ transform: rotateY(180deg); font-size:3rem; color:#cbd5e1; }
+.card.flipping .front{ animation: flipFront 2s ease forwards; }
+.card.flipping .back{  animation: flipBack  2s ease forwards; }
 
 @keyframes flipFront{
   0%{ transform: rotateY(0deg); }
@@ -83,8 +87,8 @@ h1{font-size:1.15rem;margin:0;font-weight:700;letter-spacing:.2px}
 }
 
 .meta{display:flex; gap:16px; flex-wrap:wrap; align-items:center; justify-content:center; color:var(--muted)}
+.submeta{color:var(--muted); font-size:.95rem}
 .status{font-weight:600}
-.remaining{opacity:.85}
 
 .actions{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; width:100%; max-width:560px}
 .btn{
@@ -96,20 +100,12 @@ h1{font-size:1.15rem;margin:0;font-weight:700;letter-spacing:.2px}
 }
 .btn:active{transform:translateY(1px) scale(.99)}
 .btn.pill{border-radius:999px}
-.btn.outline{
-  background:transparent; color:var(--ink);
-  border:1px solid rgba(255,255,255,.2); box-shadow:none;
-}
-.ghost{
-  background:transparent; color:var(--ink); border:1px dashed rgba(255,255,255,.25);
-  padding:8px 10px; border-radius:999px; font-weight:600;
-}
+.btn.outline{background:transparent; color:var(--ink); border:1px solid rgba(255,255,255,.2); box-shadow:none}
+.ghost{background:transparent; color:var(--ink); border:1px dashed rgba(255,255,255,.25); padding:8px 10px; border-radius:999px; font-weight:600}
 .btn.disabled{ opacity:.55; pointer-events:none; }
 
-.footer{display:flex; justify-content:center; margin-top:24px; color:var(--muted)}
-@media (hover:hover){
-  .btn:hover{filter:brightness(1.06)}
-}
+.footer{display:flex; justify-content:center; margin-top:10px; color:var(--muted)}
+@media (hover:hover){ .btn:hover{filter:brightness(1.06)} }
 
 .flash-good{outline:2px solid var(--good); box-shadow:0 0 0 6px rgba(34,197,94,.18), var(--shadow)}
 .flash-bad{outline:2px solid var(--bad); box-shadow:0 0 0 6px rgba(239,68,68,.18), var(--shadow)}
@@ -117,31 +113,14 @@ h1{font-size:1.15rem;margin:0;font-weight:700;letter-spacing:.2px}
 
 /* Lose overlay */
 .overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999; /* ensure above everything */
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
 }
 .overlay.hidden { display: none; }
-
 .overlay-content {
-  background: var(--card);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 16px;
-  padding: 24px 28px;
-  text-align: center;
-  box-shadow: var(--shadow);
-  max-width: 90vw;
+  background: var(--card); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px; padding: 24px 28px; text-align: center; box-shadow: var(--shadow); max-width: 90vw;
 }
-.overlay-content h2 {
-  margin: 0 0 12px;
-  font-size: 1.5rem;
-  color: var(--bad);
-}
-.overlay-content p {
-  margin: 0 0 16px;
-  color: var(--ink);
-}
+.overlay-content h2 { margin: 0 0 12px; font-size: 1.5rem; color: var(--bad); }
+.overlay-content p { margin: 0 0 16px; color: var(--ink); }
