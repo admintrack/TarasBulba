@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="app" data-build="v1">
+  <main class="app" data-build="v2">
     <header class="topbar">
       <h1>Taras Bulba</h1>
       <button id="installBtn" class="ghost" hidden>Install</button>
@@ -24,16 +24,18 @@
         <div class="panel">
           <div class="panel-title">Deck</div>
           <div id="deckCard" class="card" aria-live="polite" aria-atomic="true">
+            <div id="deckLabel" class="card-label hidden"></div>
             <span class="face front" id="deckFront">?</span>
             <span class="face back" id="deckBack">?</span>
           </div>
           <div class="submeta"><span id="remaining">Deck: —</span></div>
         </div>
 
-        <!-- Last card panel -->
+        <!-- Discard pile -->
         <div class="panel">
-          <div class="panel-title">Last card</div>
+          <div class="panel-title">Discard Pile</div>
           <div id="lastCard" class="card reference">
+            <div id="lastLabel" class="card-label hidden"></div>
             <span id="lastText" class="face single">—</span>
           </div>
           <div class="submeta"><span id="refHint">Waiting…</span></div>
@@ -56,9 +58,9 @@
     <footer class="footer">
       <small>
         Specials: Skip • Pass • Reverse keep the previous number.  
-        Calling Blank and drawing a **number** = loss.  
-        Calling Blank and drawing a **special** is fine.  
-        <span id="buildTag">Build: v1</span>
+        Calling Blank and drawing a number = loss.  
+        Calling Blank and drawing a special is fine.  
+        <span id="buildTag">Build: v2</span>
       </small>
     </footer>
 
