@@ -1,5 +1,5 @@
-// Taras Bulba — ultra-simple cache-first service worker
-const CACHE = "tarasbulba-v2"; // bump version so updates reach clients
+// Taras Bulba — cache with ignoreSearch so style.css?v=4 & app.js?v=4 work
+const CACHE = "tarasbulba-v6";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,7 +9,12 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    await c.addAll(ASSETS);
+    // (optional) enable navigation preload where supported
+    try { await self.registration.navigationPreload.enable(); } catch {}
+  })());
   self.skipWaiting();
 });
 
@@ -24,13 +29,19 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const { request } = e;
   if (request.method !== "GET") return;
-  e.respondWith(
-    caches.match(request).then(cached => 
-      cached || fetch(request).then(resp => {
-        const copy = resp.clone();
-        caches.open(CACHE).then(c => c.put(request, copy)).catch(()=>{});
-        return resp;
-      }).catch(() => cached) // offline fallback
-    )
-  );
+
+  e.respondWith((async () => {
+    // Try cache first (ignoring any ?v= query strings), then network, then cached fallback
+    const cached = await caches.match(request, { ignoreSearch: true });
+    try {
+      const network = await fetch(request);
+      // Update cache with the exact-request (including query) for next time
+      const copy = network.clone();
+      caches.open(CACHE).then(c => c.put(request, copy)).catch(() => {});
+      return network;
+    } catch (err) {
+      if (cached) return cached;
+      throw err;
+    }
+  })());
 });
