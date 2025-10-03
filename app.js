@@ -1,4 +1,4 @@
-/* Taras Bulba — PWA + Single-Player Game with Flip + Strict Blank Rule */
+/* Taras Bulba — PWA + Single-Player Game with Flip + Strict Blank Rule + Update-aware */
 
 let deck = [];
 let currentCard = null;      // last numbered card in play
@@ -42,10 +42,8 @@ function setStatus(msg) { statusEl.textContent = msg; }
 function updateRemaining() { remainingEl.textContent = `Deck: ${deck.length}`; }
 
 function drawCardFace(v) {
-  // update both faces so it looks correct before/after flip
   const txt = (typeof v === "number") ? String(v) : v;
   cardFront.textContent = txt;
-  // back face shows "?" until next reveal
   cardBack.textContent = "?";
 }
 
@@ -67,7 +65,7 @@ function disableButtons(disabled) {
 }
 
 function revealNext(guess){
-  if (isRevealing) return; // don't double-trigger
+  if (isRevealing) return;
   if (!deck.length) {
     setStatus("Deck exhausted — reshuffling…");
     haptic(20);
@@ -84,21 +82,17 @@ function revealNext(guess){
   const next = deck.pop();
   updateRemaining();
 
-  // Strict Blank rule: if player called "blank" and the next is anything except "Blank" → lose.
+  // Strict: calling blank and it isn't blank → loss (even if special)
   const strictBlankLoss = (guess === "blank" && next !== "Blank");
 
-  // Wait 2s to simulate turning the card
   setTimeout(()=> {
-    // Flip complete, reveal result
     const showText = (typeof next === "number") ? String(next) : next;
-    cardBack.textContent = showText; // the flipped side will now show the revealed card
+    cardBack.textContent = showText;
 
-    // Small delay to ensure it visually settles before evaluation styles
     setTimeout(()=> {
       cardEl.classList.remove("flipping");
 
       if (strictBlankLoss) {
-        // Reveal then lose
         flash("flash-bad");
         haptic(30);
         setStatus("Wrong guess — you called Blank.");
@@ -109,7 +103,6 @@ function revealNext(guess){
       }
 
       if (typeof next === "number") {
-        // Evaluate higher/lower
         const correct =
           (guess === "higher" && next > currentCard) ||
           (guess === "lower"  && next < currentCard);
@@ -118,7 +111,6 @@ function revealNext(guess){
           flash("flash-good");
           haptic(10);
           currentCard = next;
-          // sync front face to revealed after flip
           drawCardFace(currentCard);
           setStatus("Nice! Keep going.");
         } else {
@@ -128,16 +120,12 @@ function revealNext(guess){
           showLoseScreen(next);
         }
       } else {
-        // Special card
         if (next === "Blank") {
-          // Only correct if guessed Blank (strictBlankLoss already handled)
           flash("flash-good");
           haptic(12);
-          // previous number stays active
           drawCardFace("Blank");
           setStatus("Correct: Blank! Previous number stays.");
         } else {
-          // Skip / Pass / Reverse → no penalty; previous number stays
           flash("flash-special");
           haptic(8);
           drawCardFace(next);
@@ -145,7 +133,6 @@ function revealNext(guess){
         }
       }
 
-      // Resync front face to whatever is showing now
       cardFront.textContent = cardBack.textContent;
 
       isRevealing = false;
@@ -159,9 +146,22 @@ function showLoseScreen(revealed){
   loseMsg.textContent = `You revealed ${revealed}.`;
   loseOverlay.classList.remove("hidden");
 }
-
 function hideLoseScreen(){
   if (loseOverlay) loseOverlay.classList.add("hidden");
+}
+
+// --- PWA update helpers ---
+async function initServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+
+  const reg = await navigator.serviceWorker.register("./sw.js");
+  // Proactively check for an update on every load
+  try { await reg.update(); } catch {}
+
+  // Auto-reload when the new SW takes control
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    window.location.reload();
+  });
 }
 
 // UI wiring
@@ -183,10 +183,8 @@ window.addEventListener("load", () => {
   // Start the game
   newRound();
 
-  // PWA: register service worker
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js");
-  }
+  // PWA: register/update service worker and auto-reload on new version
+  initServiceWorker();
 
   // Lightweight custom install prompt
   let deferredPrompt;
