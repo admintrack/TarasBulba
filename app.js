@@ -1,5 +1,5 @@
-// Taras Bulba — deck slides OVER discard; deck shows card-back stack while moving.
-// Special label appears ONLY on the last (discard) card.
+// Taras Bulba — moving card slides OVER discard; static deck stays below.
+// Special label appears ONLY on the last (discard) card. Overlay is above all.
 
 let deck = [];
 let currentCard = null;
@@ -16,7 +16,7 @@ function updateRemaining(){document.getElementById("remaining").textContent=`Dec
 function drawReference(v){
   document.getElementById("lastText").textContent=v;
   document.getElementById("refHint").textContent=`Compare against: ${v}`;
-  showLabel(lastLabel, null); // clear any leftover special tag when a number becomes the reference
+  showLabel(lastLabel, null);
 }
 function resetDeckFace(){
   document.getElementById("deckFront").textContent="?";
@@ -53,10 +53,10 @@ function revealNext(guess){
   const next = deck.pop(); updateRemaining();
   const {dx,dy} = computeSlideDelta();
 
-  // Put reveal value on the back; flip runs while sliding
+  // Back face shows revealed value; flip runs while sliding
   document.getElementById("deckBack").textContent = next;
   const deckCard = document.getElementById("deckCard");
-  deckCard.classList.add("animating","on-top"); // ensure it goes OVER discard
+  deckCard.classList.add("animating","on-top"); // ensure slides OVER discard
 
   const slide = deckCard.animate(
     [{transform:"translate(0,0)"},{transform:`translate(${dx}px,${dy}px)`}],
@@ -75,7 +75,6 @@ function revealNext(guess){
 }
 
 function evaluate(next,guess){
-  // Blank guess only loses if a NUMBER appears; specials (Skip/Pass/Reverse) are fine
   const blankLoss = (guess==="blank" && typeof next==="number");
   if(blankLoss){
     setStatus("Wrong guess — called Blank but drew a number.");
@@ -94,13 +93,13 @@ function evaluate(next,guess){
       showLoseScreen(next);
     }
   } else {
-    // Specials & Blank handling; label ONLY on last card
+    // Specials & Blank: label ONLY on last card
     if(next==="Blank"){
       setStatus("Correct: Blank! Previous number stays.");
       showLabel(lastLabel, "Blank");
     } else {
       setStatus(`${next}! Previous number (${currentCard}) stays.`);
-      showLabel(lastLabel, next); // only on the discard
+      showLabel(lastLabel, next);
     }
   }
 }
@@ -111,7 +110,7 @@ function finishReveal(){
     [{transform:getComputedStyle(deckCard).transform},{transform:"translate(0,0)"}],
     {duration:250,fill:"forwards"}
   ).onfinish = () => {
-    deckCard.classList.remove("on-top"); // restore stacking
+    deckCard.classList.remove("on-top"); // restore z-index so overlay stays above
     resetDeckFace();
     disableButtons(false);
     isRevealing = false;
