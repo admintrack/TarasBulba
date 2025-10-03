@@ -1,8 +1,8 @@
-/* Minimal PWA + Game Logic (single-player) */
+/* Taras Bulba — Minimal PWA + Single-Player Game Logic */
 
 let deck = [];
 let currentCard = null;      // last numbered card in play
-let remainingEl, statusEl, cardEl;
+let remainingEl, statusEl, cardEl, loseOverlay, loseMsg;
 
 const SPECIALS = ["Blank", "Skip", "Skip", "Pass", "Pass", "Reverse", "Reverse"];
 
@@ -21,7 +21,6 @@ function shuffle(a) {
 
 // Ensure the first visible card is a NUMBER (not a special)
 function dealFirstNumber() {
-  // rotate until top is number
   let safety = 100;
   while (deck.length && typeof deck[deck.length - 1] !== "number" && safety--) {
     deck.unshift(deck.pop());
@@ -35,14 +34,14 @@ function newRound() {
   deck = shuffle(buildDeck());
   dealFirstNumber();
   updateRemaining();
+  hideLoseScreen();
 }
 
 function setStatus(msg) { statusEl.textContent = msg; }
 function updateRemaining() { remainingEl.textContent = `Deck: ${deck.length}`; }
 
 function drawCardFace(v) {
-  const txt = (typeof v === "number") ? v : v; // shows special text as-is
-  cardEl.textContent = txt;
+  cardEl.textContent = (typeof v === "number") ? v : v; // shows special text as-is
 }
 
 function haptic(ms = 15){ if (navigator.vibrate) navigator.vibrate(ms); }
@@ -55,7 +54,6 @@ function flash(kind){
 
 function revealNext(guess){
   if (!deck.length) {
-    // deck exhausted → auto reshuffle new round
     setStatus("Deck exhausted — reshuffling…");
     haptic(20);
     newRound();
@@ -66,9 +64,7 @@ function revealNext(guess){
   updateRemaining();
 
   if (typeof next === "number") {
-    // A number appeared
     if (guess === "blank") {
-      // Only correct if next is Blank — it's not, so lose
       lose(next);
       return;
     }
@@ -89,18 +85,16 @@ function revealNext(guess){
     // Special card: Blank / Skip / Pass / Reverse
     if (next === "Blank") {
       if (guess === "blank") {
-        // Correct guess — previous number stays as reference
         drawCardFace("Blank");
         flash("flash-good");
         haptic(12);
         setStatus("Correct: Blank! Previous number stays.");
       } else {
-        // Wrong unless guessed Blank
         lose("Blank");
         return;
       }
     } else {
-      // Skip / Pass / Reverse → do not evaluate the guess, no penalty
+      // Skip / Pass / Reverse → no penalty, previous number stays
       drawCardFace(next);
       flash("flash-special");
       haptic(8);
@@ -113,9 +107,19 @@ function lose(revealed){
   drawCardFace(revealed);
   flash("flash-bad");
   haptic(30);
-  setStatus("Wrong guess — game over. New round…");
-  // Auto start a fresh round after a brief pause
-  setTimeout(newRound, 650);
+  setStatus("Wrong guess — game over.");
+  showLoseScreen(revealed);
+}
+
+/* Lose screen helpers */
+function showLoseScreen(revealed){
+  if (loseOverlay) {
+    loseMsg.textContent = `You revealed ${revealed}.`;
+    loseOverlay.classList.remove("hidden");
+  }
+}
+function hideLoseScreen(){
+  if (loseOverlay) loseOverlay.classList.add("hidden");
 }
 
 // UI wiring
@@ -123,11 +127,14 @@ window.addEventListener("load", () => {
   cardEl = document.getElementById("card");
   statusEl = document.getElementById("status");
   remainingEl = document.getElementById("remaining");
+  loseOverlay = document.getElementById("loseOverlay");
+  loseMsg = document.getElementById("loseMsg");
 
   document.getElementById("btnHigher").addEventListener("click", ()=> revealNext("higher"));
   document.getElementById("btnLower").addEventListener("click",  ()=> revealNext("lower"));
   document.getElementById("btnBlank").addEventListener("click",  ()=> revealNext("blank"));
   document.getElementById("newGame").addEventListener("click",   ()=> { haptic(8); newRound(); });
+  document.getElementById("restartBtn").addEventListener("click", ()=> { hideLoseScreen(); newRound(); });
 
   // Start the game
   newRound();
