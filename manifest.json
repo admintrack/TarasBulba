@@ -10,12 +10,12 @@
   "description": "Taras Bulba — a single-player higher/lower/blank card game with specials.",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAMAAABlApw1AAAABlBMVEX///8AAABVwtN+AAAACXBIWXMAAAsTAAALEwEAmpwYAAABcUlEQVR4nO3ZsQ2DMBBE0UHw/z+bcNEqEYZk8r14XQNZ3VtQTr62tra2tra2tra2tra2tra2tra2tratuAx5Z9wHZOBVj7KukWkK6x7L8fwZf92dgvnmUuPjDXQ8XbBsHBizlIm2bDo5xW7YZXyoO2TXWr12Lr7i1wEDbjTdD/2KavNTfVnnFgvdTwTrtCjs2u9OT76PYH3t0rT2OQ+Oi8rp2JzTZ9az25NNHzU6t6rNOe/U60OLW91vzrM1U7xd2PWb2rcwe9f6vNzuC/T8zV6Nyjv3/Tp3Zf3pNZ5zjKQx5ZnIfPuvFRPc2tra2tra2tra2tra2tra2tra2tra2rZ0/wCMQl0fp7jXhwAAAABJRU5ErkJggg==",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAABlBMVEX///8AAABVwtN+AAAACXBIWXMAAAsTAAALEwEAmpwYAAABt0lEQVR4nO2Zy27DMAxFX0jz/3+bcFOoJmnwkgzaxDutVQZibU95aq0tq+u6urq6urq6urq6urq6urq6urq6urq7sHgDZfY2EuA17iuK0LgOt5TwsPgQ/Cft1mdZ4U4G/Z7M+7wKgE72NyKs62n2qV6nP2v2/3oFFnnJ5jG5bGdeB5ehWgP5cnXaaVh8/bNVXnx7DumqfX9UvcsgRXuhdkOduLQOVgYJv66cS3Wdv0DsWfqjH2+Qmua+Lt87vuos7O3eUrvDtvbbQj5wlJeX7MCbvvPBvn+pjG+xXd6xrRnHn9dYjldZFuLD92pR2iNqX21Hqlczi/zDq1P1riBNjtxY+76RXxrsy09OSWXzrs7vhROycnccvtdPXZeM/3TFlTxrvlZu2k97k6ex/wV32F8hucbzNsm/bi2Id82y/hvnWRWddWVVVVVVVVVVVVVVVVVVVVVVVVVdVd+gDJ9mtyojqxdAAAAAElFTkSuQmCC",
       "sizes": "512x512",
       "type": "image/png"
     }
