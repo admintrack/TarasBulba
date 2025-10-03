@@ -6,27 +6,41 @@
   <title>Taras Bulba</title>
   <meta name="theme-color" content="#0f172a" />
   <link rel="manifest" href="manifest.json" />
-  <!-- Tiny inline favicon -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f172a'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dominant-baseline='central' font-family='system-ui' font-size='28' fill='%23ffffff'%3ETB%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=4" />
 </head>
 <body>
-  <main class="app">
+  <main class="app" data-build="v4">
     <header class="topbar">
       <h1>Taras Bulba</h1>
       <button id="installBtn" class="ghost" hidden>Install</button>
     </header>
 
     <section class="table">
-      <!-- Card now has inner faces for a nicer flip -->
-      <div id="card" class="card" aria-live="polite" aria-atomic="true">
-        <span class="face front" id="cardFront">—</span>
-        <span class="face back" id="cardBack">?</span>
+      <!-- New side-by-side board -->
+      <div class="board">
+        <!-- Deck panel (face-down card that flips) -->
+        <div class="panel">
+          <div class="panel-title">Deck</div>
+          <div id="deckCard" class="card" aria-live="polite" aria-atomic="true">
+            <span class="face front" id="deckFront">?</span>
+            <span class="face back" id="deckBack">?</span>
+          </div>
+          <div class="submeta"><span id="remaining">Deck: —</span></div>
+        </div>
+
+        <!-- Last card panel (reference you compare against) -->
+        <div class="panel">
+          <div class="panel-title">Last card</div>
+          <div id="lastCard" class="card reference">
+            <span id="lastText" class="face single">—</span>
+          </div>
+          <div class="submeta"><span id="refHint">Waiting…</span></div>
+        </div>
       </div>
 
       <div class="meta">
         <span id="status" class="status">Tap a guess to start</span>
-        <span id="remaining" class="remaining">Deck: —</span>
       </div>
 
       <div class="actions">
@@ -41,7 +55,10 @@
     </section>
 
     <footer class="footer">
-      <small>Specials: Skip • Pass • Reverse keep the previous number. Calling Blank and it’s not Blank = loss.</small>
+      <small>
+        Specials: Skip • Pass • Reverse keep the previous number. Calling Blank and it’s not Blank = loss.
+        &nbsp;•&nbsp;<span id="buildTag">Build: v4</span>
+      </small>
     </footer>
 
     <!-- Lose Screen Overlay -->
@@ -54,6 +71,6 @@
     </div>
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
