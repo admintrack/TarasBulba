@@ -1,21 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hello World PWA</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0f4c81">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Hi/Lo/Blank</title>
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f172a'/%3E%3Ctext x='50%' y='50%' text-anchor='middle' dominant-baseline='central' font-family='system-ui' font-size='34' fill='%23ffffff'%3EHL%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Hello World 🌍</h1>
-  <p>This is my first Progressive Web App!</p>
+  <main class="app">
+    <header class="topbar">
+      <h1>Hi / Lo / Blank</h1>
+      <button id="installBtn" class="ghost" hidden>Install</button>
+    </header>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log('Service Worker Registered'));
-    }
-  </script>
+    <section class="table">
+      <div id="card" class="card" aria-live="polite" aria-atomic="true">—</div>
+
+      <div class="meta">
+        <span id="status" class="status">Tap a guess to start</span>
+        <span id="remaining" class="remaining">Deck: —</span>
+      </div>
+
+      <div class="actions">
+        <button id="btnLower" class="btn pill">Lower ⬇️</button>
+        <button id="btnBlank" class="btn pill">Blank ⬜</button>
+        <button id="btnHigher" class="btn pill">Higher ⬆️</button>
+      </div>
+
+      <div class="toolbar">
+        <button id="newGame" class="btn outline">New Round ↻</button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <small>Single-player. Specials: Skip • Pass • Reverse keep the previous number.</small>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
 </body>
 </html>
